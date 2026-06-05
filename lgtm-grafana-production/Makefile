@@ -1,4 +1,4 @@
-.PHONY: render bootstrap-secrets install status dashboards placeholders
+.PHONY: render bootstrap-secrets install status dashboards kind-multinode install-kind-multinode test-kind-multinode pf-grafana placeholders
 
 render:
 	./scripts/render-lgtm-production.sh
@@ -14,6 +14,18 @@ status:
 
 dashboards:
 	./scripts/apply-dashboards.sh
+
+kind-multinode:
+	./scripts/create-kind-multinode.sh
+
+install-kind-multinode:
+	./scripts/install-kind-multinode.sh
+
+test-kind-multinode:
+	./scripts/test-lgtm-multinode.sh
+
+pf-grafana:
+	./scripts/port-forward-grafana.sh
 
 placeholders:
 	@grep -R "REPLACE_ME" values secrets README.md scripts || true

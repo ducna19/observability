@@ -1,0 +1,17 @@
+# Lab overlay for a multi-node Kind cluster.
+# Stateful components stay small; stateless query/ingest entrypoints get replicas
+# so Kubernetes can spread them across worker nodes.
+nginx:
+  replicas: 2
+
+distributor:
+  replicas: 2
+
+querier:
+  replicas: 2
+
+query_frontend:
+  replicas: 2
+
+query_scheduler:
+  replicas: 2

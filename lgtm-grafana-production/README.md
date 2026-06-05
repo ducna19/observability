@@ -119,6 +119,29 @@ PodMonitor
 RBAC
 ```
 
+## Chạy Multi-Node Trên Máy Local
+
+Nếu muốn demo stack LGTM trên nhiều Kubernetes node bằng Kind:
+
+```bash
+cd /home/ducna/Documents/Observability/lgtm-grafana-production
+make kind-multinode
+make install-kind-multinode
+make test-kind-multinode
+```
+
+Mở Grafana:
+
+```bash
+make pf-grafana
+```
+
+Chi tiết kiến trúc, lý do scale từng component và cách demo nằm trong:
+
+```text
+MULTINODE_RUNBOOK.md
+```
+
 ## Bước 2: Hiểu Từng Thành Phần
 
 ### Mimir

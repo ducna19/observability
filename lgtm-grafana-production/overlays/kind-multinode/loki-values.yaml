@@ -1,0 +1,9 @@
+# Lab overlay for a multi-node Kind cluster.
+read:
+  replicas: 2
+
+write:
+  replicas: 2
+
+gateway:
+  replicas: 2

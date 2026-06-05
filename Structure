@@ -40,11 +40,20 @@ STACK_DASHBOARDS_GUIDE.md
 
 lgtm-grafana-production/
 ├── README.md
+├── MULTINODE_RUNBOOK.md
 ├── Makefile
 ├── namespaces.yaml
+├── kind/
+│   └── lgtm-multinode.yaml
 ├── dashboards/
 │   ├── README.md
 │   └── lgtm-stack-overview.json
+├── overlays/
+│   └── kind-multinode/
+│       ├── mimir-values.yaml
+│       ├── loki-values.yaml
+│       ├── tempo-values.yaml
+│       └── alloy-gateway-values.yaml
 ├── values/
 │   ├── kps-production-values.yaml
 │   ├── mimir-production-values.yaml
@@ -61,6 +70,10 @@ lgtm-grafana-production/
     ├── bootstrap-sandbox-secrets.sh
     ├── install-lgtm-production.sh
     ├── apply-dashboards.sh
+    ├── create-kind-multinode.sh
+    ├── install-kind-multinode.sh
+    ├── test-lgtm-multinode.sh
+    ├── port-forward-grafana.sh
     └── status-lgtm-production.sh
 
 signoz-production/

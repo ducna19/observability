@@ -1,0 +1,20 @@
+# Lab overlay for a multi-node Kind cluster.
+ingester:
+  config:
+    replication_factor: 1
+
+  # Keep one stateful ingester for this single-machine lab. Production can raise
+  # this together with replication_factor and zone-aware replication.
+  replicas: 1
+
+distributor:
+  replicas: 2
+
+querier:
+  replicas: 2
+
+queryFrontend:
+  replicas: 2
+
+gateway:
+  replicas: 2
