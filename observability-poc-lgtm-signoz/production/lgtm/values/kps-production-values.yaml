@@ -1,0 +1,187 @@
+fullnameOverride: kps
+
+grafana:
+  enabled: true
+  replicas: 2
+
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+
+  persistence:
+    enabled: true
+    type: pvc
+    size: 20Gi
+
+  initChownData:
+    enabled: false
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      searchNamespace: ALL
+      folderAnnotation: grafana_folder
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      searchNamespace: ALL
+
+  defaultDashboardsEnabled: true
+
+  grafana.ini:
+    server:
+      root_url: https://grafana.REPLACE_ME_DOMAIN
+    users:
+      default_theme: light
+      viewers_can_edit: false
+    analytics:
+      reporting_enabled: false
+      check_for_updates: false
+    security:
+      cookie_secure: true
+      strict_transport_security: true
+      disable_gravatar: true
+    auth:
+      disable_login_form: false
+    auth.generic_oauth:
+      enabled: false
+      name: OIDC
+      allow_sign_up: true
+      client_id: $__file{/etc/secrets/grafana-oauth/client-id}
+      client_secret: $__file{/etc/secrets/grafana-oauth/client-secret}
+      scopes: openid profile email groups
+      auth_url: https://REPLACE_ME_IDP/authorize
+      token_url: https://REPLACE_ME_IDP/token
+      api_url: https://REPLACE_ME_IDP/userinfo
+    date_formats:
+      default_timezone: browser
+
+  extraSecretMounts:
+    - name: grafana-oauth
+      secretName: grafana-oauth
+      defaultMode: 0440
+      mountPath: /etc/secrets/grafana-oauth
+      readOnly: true
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Mimir
+          uid: mimir
+          type: prometheus
+          access: proxy
+          url: http://mimir-nginx.observability.svc.cluster.local/prometheus
+          isDefault: true
+          jsonData:
+            httpHeaderName1: X-Scope-OrgID
+          secureJsonData:
+            httpHeaderValue1: production
+        - name: Loki
+          uid: loki
+          type: loki
+          access: proxy
+          url: http://loki-gateway.observability.svc.cluster.local
+          jsonData:
+            maxLines: 1000
+            derivedFields:
+              - name: trace_id
+                matcherRegex: '"trace_id":"([A-Fa-f0-9]+)"'
+                datasourceUid: tempo
+                url: '$${__value.raw}'
+        - name: Tempo
+          uid: tempo
+          type: tempo
+          access: proxy
+          url: http://tempo-query-frontend.observability.svc.cluster.local:3100
+          jsonData:
+            tracesToLogsV2:
+              datasourceUid: loki
+              filterByTraceID: true
+              spanStartTimeShift: "-10m"
+              spanEndTimeShift: "10m"
+            serviceMap:
+              datasourceUid: mimir
+
+prometheus:
+  prometheusSpec:
+    replicas: 2
+    shards: 1
+    retention: 6h
+    retentionSize: 20GB
+    enableAdminAPI: false
+
+    resources:
+      requests:
+        cpu: "1"
+        memory: 4Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Gi
+
+    externalLabels:
+      cluster: REPLACE_ME_CLUSTER
+      env: production
+      platform: lgtm
+
+    remoteWrite:
+      - url: http://mimir-nginx.observability.svc.cluster.local/api/v1/push
+        headers:
+          X-Scope-OrgID: production
+        queueConfig:
+          capacity: 20000
+          maxShards: 50
+          minShards: 4
+          maxSamplesPerSend: 5000
+          batchSendDeadline: 5s
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    replicas: 3
+    retention: 120h
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true
+  admissionWebhooks:
+    enabled: true
+    patch:
+      enabled: true

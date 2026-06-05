@@ -1,0 +1,81 @@
+observability-poc/
+├── README.md
+├── 00-namespaces/
+│   └── namespaces.yaml
+├── 01-standards/
+│   ├── label-standard.md
+│   ├── dashboard-standard.md
+│   ├── alert-standard.md
+│   └── retention-policy.md
+├── 10-lgtm/
+│   ├── kps-values.yaml
+│   ├── loki-values.yaml
+│   ├── tempo-values.yaml
+│   ├── mimir-values.yaml
+│   ├── alloy-values.yaml
+│   └── grafana-datasources.yaml
+├── 20-signoz/
+│   ├── signoz-values.yaml
+│   ├── k8s-infra-values.yaml
+│   └── clickhouse-notes.md
+├── 30-router/
+│   └── otel-router-values.yaml
+├── 40-poc-apps/
+│   ├── sample-app-values.yaml
+│   └── otel-demo-values.yaml
+├── 50-dashboards/
+│   ├── executive-poc.json
+│   ├── noc-poc.json
+│   └── service-template.json
+├── 60-alerts/
+│   ├── prometheus-rules.yaml
+│   └── alertmanager-routing.yaml
+└── 90-benchmark/
+    ├── benchmark-template.xlsx
+    ├── test-scenarios.md
+    └── final-scorecard.md
+
+OBSERVABILITY_DEMO_PLAYBOOK.md
+STACK_DASHBOARDS_GUIDE.md
+
+lgtm-grafana-production/
+├── README.md
+├── Makefile
+├── namespaces.yaml
+├── dashboards/
+│   ├── README.md
+│   └── lgtm-stack-overview.json
+├── values/
+│   ├── kps-production-values.yaml
+│   ├── mimir-production-values.yaml
+│   ├── loki-production-values.yaml
+│   ├── tempo-production-values.yaml
+│   ├── alloy-gateway-values.yaml
+│   └── alloy-agent-values.yaml
+├── secrets/
+│   ├── object-storage.example.yaml
+│   ├── grafana-admin.example.yaml
+│   └── grafana-oauth.example.yaml
+└── scripts/
+    ├── render-lgtm-production.sh
+    ├── bootstrap-sandbox-secrets.sh
+    ├── install-lgtm-production.sh
+    ├── apply-dashboards.sh
+    └── status-lgtm-production.sh
+
+signoz-production/
+├── README.md
+├── Makefile
+├── namespaces.yaml
+├── dashboards/
+│   ├── README.md
+│   └── signoz-stack-overview.json
+├── values/
+│   ├── signoz-production-values.yaml
+│   └── k8s-infra-production-values.yaml
+└── scripts/
+    ├── render-signoz-production.sh
+    ├── install-signoz-production.sh
+    ├── status-signoz-production.sh
+    ├── patch-static-collector.sh
+    └── port-forward-signoz.sh

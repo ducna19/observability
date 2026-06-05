@@ -1,0 +1,69 @@
+# SigNoz Kubernetes infra collection values.
+# Installed in a separate namespace and exports data to SigNoz core OTLP HTTP.
+
+global:
+  clusterName: learning-lab
+  deploymentEnvironment: production-lab
+
+clusterName: learning-lab
+otelCollectorEndpoint: http://signoz-otel-collector.signoz-production.svc.cluster.local:4318
+otelInsecure: true
+
+presets:
+  logsCollection:
+    enabled: true
+    startAt: end
+    blacklist:
+      enabled: true
+      signozLogs: false
+      namespaces:
+        - kube-system
+        - local-path-storage
+      pods: []
+      containers: []
+  hostMetrics:
+    enabled: true
+    collectionInterval: 60s
+  kubeletMetrics:
+    enabled: true
+    collectionInterval: 60s
+  clusterMetrics:
+    enabled: true
+    collectionInterval: 60s
+  kubernetesAttributes:
+    enabled: true
+  resourceDetection:
+    enabled: true
+  k8sEvents:
+    enabled: true
+  prometheus:
+    enabled: false
+
+otelAgent:
+  enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  ports:
+    otlp:
+      hostPort: ""
+    otlp-http:
+      hostPort: ""
+    metrics:
+      hostPort: ""
+    health-check:
+      hostPort: ""
+
+otelDeployment:
+  enabled: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi

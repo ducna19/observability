@@ -1,0 +1,72 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: poc-service-alerts
+  namespace: obs-lgtm
+  labels:
+    release: kps
+spec:
+  groups:
+    - name: poc.service.rules
+      rules:
+        - alert: PodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace="poc-apps"}[10m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+            env: poc
+            system: observability-poc
+            team: devops
+            owner: devops-platform
+          annotations:
+            summary: "Pod is crash looping"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} restarted more than 3 times in 10 minutes."
+            runbook: "https://internal-runbook/pod-crashlooping"
+
+        - alert: DeploymentUnavailable
+          expr: kube_deployment_status_replicas_unavailable{namespace="poc-apps"} > 0
+          for: 5m
+          labels:
+            severity: critical
+            env: poc
+            system: observability-poc
+            team: devops
+            owner: devops-platform
+          annotations:
+            summary: "Deployment has unavailable replicas"
+            description: "Deployment {{ $labels.deployment }} has unavailable replicas."
+            runbook: "https://internal-runbook/deployment-unavailable"
+
+        - alert: NodeNotReady
+          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            env: poc
+            system: observability-poc
+            team: devops
+            owner: devops-platform
+          annotations:
+            summary: "Kubernetes node is not ready"
+            description: "Node {{ $labels.node }} is not ready."
+            runbook: "https://internal-runbook/node-not-ready"
+
+        - alert: HighErrorRateSampleApp
+          expr: |
+            (
+              sum(rate(http_requests_total{namespace="poc-apps",status=~"5.."}[5m]))
+              /
+              clamp_min(sum(rate(http_requests_total{namespace="poc-apps"}[5m])), 1)
+            ) > 0.05
+          for: 3m
+          labels:
+            severity: warning
+            env: poc
+            system: observability-poc
+            service: sample-api
+            team: devops
+            owner: devops-platform
+          annotations:
+            summary: "High error rate on sample app"
+            description: "5xx error ratio is above 5% for sample app."
+            runbook: "https://internal-runbook/high-error-rate"

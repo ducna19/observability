@@ -1,0 +1,83 @@
+fullnameOverride: kps
+
+grafana:
+  enabled: true
+  adminUser: admin
+  adminPassword: "admin-poc-change-me"
+
+  persistence:
+    enabled: true
+    size: 10Gi
+
+  initChownData:
+    enabled: false
+
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      searchNamespace: ALL
+
+  defaultDashboardsEnabled: true
+
+  grafana.ini:
+    users:
+      default_theme: light
+    date_formats:
+      default_timezone: browser
+
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    retentionSize: 40GB
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+
+    externalLabels:
+      cluster: k8s-poc-01
+      env: poc
+      system: observability-poc
+
+    # Khi cài Mimir, bỏ comment block dưới đây hoặc dùng kps-values-with-mimir.yaml
+    # remoteWrite:
+    #   - url: http://mimir-nginx.obs-lgtm.svc.cluster.local/api/v1/push
+    #     headers:
+    #       X-Scope-OrgID: poc
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true

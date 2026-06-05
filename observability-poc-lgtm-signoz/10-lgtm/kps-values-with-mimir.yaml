@@ -1,0 +1,73 @@
+fullnameOverride: kps
+
+grafana:
+  enabled: true
+  adminUser: admin
+  adminPassword: "admin-poc-change-me"
+
+  persistence:
+    enabled: true
+    size: 10Gi
+
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      searchNamespace: ALL
+
+  defaultDashboardsEnabled: true
+
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    retentionSize: 20GB
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 30Gi
+
+    externalLabels:
+      cluster: k8s-poc-01
+      env: poc
+      system: observability-poc
+
+    remoteWrite:
+      - url: http://mimir-nginx.obs-lgtm.svc.cluster.local/api/v1/push
+        headers:
+          X-Scope-OrgID: poc
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true

@@ -1,0 +1,129 @@
+global:
+  extraEnvFrom:
+    - secretRef:
+        name: lgtm-object-storage
+
+tempo:
+  reportingEnabled: false
+
+server:
+  logLevel: info
+
+storage:
+  trace:
+    backend: s3
+    s3:
+      bucket: learning-lab-tempo-traces
+      endpoint: lgtm-minio.observability.svc.cluster.local:9000
+      region: local-1
+      access_key: learning-lab-access-key
+      secret_key: learning-lab-secret-key-change-me
+      insecure: true
+
+traces:
+  otlp:
+    grpc:
+      enabled: true
+    http:
+      enabled: true
+  jaeger:
+    grpc:
+      enabled: false
+    thriftHttp:
+      enabled: false
+    thriftBinary:
+      enabled: false
+    thriftCompact:
+      enabled: false
+  zipkin:
+    enabled: false
+
+distributor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+
+ingester:
+  replicas: 1
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+queryFrontend:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+compactor:
+  replicas: 1
+  config:
+    compaction:
+      block_retention: 336h
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+metricsGenerator:
+  enabled: true
+  replicas: 1
+  affinity: ""
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  config:
+    storage:
+      remote_write:
+        - url: http://mimir-gateway.observability.svc.cluster.local/api/v1/push
+          headers:
+            X-Scope-OrgID: production
+    processor:
+      service_graphs:
+        dimensions:
+          - service.namespace
+          - deployment.environment
+      span_metrics:
+        dimensions:
+          - service.namespace
+          - deployment.environment
+
+gateway:
+  enabled: true
+  replicas: 1
+
+memcached:
+  enabled: false

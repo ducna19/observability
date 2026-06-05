@@ -1,0 +1,116 @@
+controller:
+  type: deployment
+  replicas: 1
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+service:
+  enabled: true
+
+alloy:
+  clustering:
+    enabled: true
+
+  extraPorts:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+  configMap:
+    create: true
+    content: |
+      logging {
+        level  = "info"
+        format = "logfmt"
+      }
+
+      otelcol.receiver.otlp "apps" {
+        grpc {
+          endpoint = "0.0.0.0:4317"
+        }
+
+        http {
+          endpoint = "0.0.0.0:4318"
+        }
+
+        output {
+          metrics = [otelcol.processor.memory_limiter.default.input]
+          logs    = [otelcol.processor.memory_limiter.default.input]
+          traces  = [otelcol.processor.memory_limiter.default.input]
+        }
+      }
+
+      otelcol.processor.memory_limiter "default" {
+        check_interval = "5s"
+        limit          = "1536MiB"
+
+        output {
+          metrics = [otelcol.processor.batch.default.input]
+          logs    = [otelcol.processor.batch.default.input]
+          traces  = [otelcol.processor.batch.default.input]
+        }
+      }
+
+      otelcol.processor.batch "default" {
+        timeout = "5s"
+        send_batch_size = 2048
+        send_batch_max_size = 4096
+
+        output {
+          metrics = [otelcol.exporter.prometheus.mimir.input]
+          logs    = [otelcol.exporter.loki.default.input]
+          traces  = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
+
+      otelcol.exporter.prometheus "mimir" {
+        forward_to = [prometheus.remote_write.mimir.receiver]
+      }
+
+      prometheus.remote_write "mimir" {
+        endpoint {
+          url = "http://mimir-gateway.observability.svc.cluster.local/api/v1/push"
+          headers = {
+            "X-Scope-OrgID" = "production",
+          }
+        }
+      }
+
+      otelcol.exporter.loki "default" {
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push"
+          headers = {
+            "X-Scope-OrgID" = "production",
+          }
+        }
+      }
+
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "tempo-distributor.observability.svc.cluster.local:4317"
+          tls {
+            insecure = true
+          }
+        }
+      }

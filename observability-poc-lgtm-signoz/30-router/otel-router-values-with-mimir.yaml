@@ -1,0 +1,110 @@
+mode: deployment
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 2Gi
+
+ports:
+  otlp:
+    enabled: true
+    containerPort: 4317
+    servicePort: 4317
+    protocol: TCP
+  otlp-http:
+    enabled: true
+    containerPort: 4318
+    servicePort: 4318
+    protocol: TCP
+
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  processors:
+    memory_limiter:
+      check_interval: 5s
+      limit_mib: 1536
+      spike_limit_mib: 512
+
+    resource/poc:
+      attributes:
+        - key: deployment.environment
+          value: poc
+          action: upsert
+        - key: deployment.environment.name
+          value: poc
+          action: upsert
+        - key: k8s.cluster.name
+          value: k8s-poc-01
+          action: upsert
+        - key: team.name
+          value: devops
+          action: upsert
+        - key: owner
+          value: devops-platform
+          action: upsert
+        - key: criticality
+          value: tier-3
+          action: upsert
+
+    batch:
+      timeout: 5s
+      send_batch_size: 2048
+      send_batch_max_size: 4096
+
+  exporters:
+    otlp/tempo:
+      endpoint: tempo.obs-lgtm.svc.cluster.local:4317
+      tls:
+        insecure: true
+
+    otlphttp/loki:
+      endpoint: http://loki-gateway.obs-lgtm.svc.cluster.local/otlp
+
+    prometheusremotewrite/mimir:
+      endpoint: http://mimir-nginx.obs-lgtm.svc.cluster.local/api/v1/push
+      headers:
+        X-Scope-OrgID: poc
+
+    otlp/signoz:
+      endpoint: signoz-otel-collector.obs-signoz.svc.cluster.local:4317
+      tls:
+        insecure: true
+
+    debug:
+      verbosity: basic
+
+  service:
+    telemetry:
+      logs:
+        level: info
+
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, resource/poc, batch]
+        exporters: [otlp/tempo, otlp/signoz, debug]
+
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, resource/poc, batch]
+        exporters: [otlphttp/loki, otlp/signoz, debug]
+
+      metrics:
+        receivers: [otlp]
+        processors: [memory_limiter, resource/poc, batch]
+        exporters: [prometheusremotewrite/mimir, otlp/signoz, debug]

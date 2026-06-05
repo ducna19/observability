@@ -1,0 +1,26 @@
+# Generated manifests and local render output
+**/.rendered/
+!**/.rendered/.gitkeep
+
+# Local archives and packaging output
+*.tar
+*.tar.gz
+*.tar.xz
+*.zip
+
+# Runtime/debug output
+*.log
+*.tmp
+
+# Local environment and credentials
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.kubeconfig
+kubeconfig*
+
+# Keep example secret manifests, ignore real secret manifests by convention
+**/secrets/*.yaml
+!**/secrets/*.example.yaml

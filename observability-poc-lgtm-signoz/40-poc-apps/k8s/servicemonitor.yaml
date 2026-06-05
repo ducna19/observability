@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sample-api
+  namespace: poc-apps
+  labels:
+    release: kps
+    env: poc
+    system: observability-poc
+    service: sample-api
+    team: devops
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sample-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+  namespaceSelector:
+    matchNames:
+      - poc-apps

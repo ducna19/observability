@@ -1,0 +1,205 @@
+{
+  "description": "Production-like SigNoz stack overview for demo: SigNoz UI, OTel Collector, ClickHouse, Zookeeper, ClickHouse Operator, k8s-infra collectors, and telemetry volume.",
+  "dotMigrated": true,
+  "image": "",
+  "layout": [
+    {"h": 5, "i": "component-inventory", "moved": false, "static": false, "w": 6, "x": 0, "y": 0},
+    {"h": 5, "i": "telemetry-volume", "moved": false, "static": false, "w": 6, "x": 6, "y": 0},
+    {"h": 5, "i": "logs-by-component", "moved": false, "static": false, "w": 6, "x": 0, "y": 5},
+    {"h": 5, "i": "recent-k8s-events", "moved": false, "static": false, "w": 6, "x": 6, "y": 5},
+    {"h": 6, "i": "metric-samples-by-minute", "moved": false, "static": false, "w": 6, "x": 0, "y": 10},
+    {"h": 6, "i": "logs-by-minute", "moved": false, "static": false, "w": 6, "x": 6, "y": 10},
+    {"h": 6, "i": "smoke-traces", "moved": false, "static": false, "w": 12, "x": 0, "y": 16}
+  ],
+  "panelMap": {},
+  "tags": ["production-lab", "signoz", "clickhouse", "stack-overview"],
+  "title": "SigNoz Production Stack Overview",
+  "uploadedGrafana": false,
+  "variables": {},
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "component-inventory",
+      "title": "SigNoz Component Inventory",
+      "description": "Bang giai thich cac thanh phan cua stack SigNoz va vai tro cua tung thanh phan.",
+      "panelTypes": "table",
+      "query": {
+        "id": "component-inventory-query",
+        "queryType": "clickhouse_sql",
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "disabled": false,
+            "legend": "",
+            "query": "SELECT 'signoz' AS component, 'signoz-production' AS namespace, 'UI + query service + alerting' AS role UNION ALL SELECT 'signoz-otel-collector', 'signoz-production', 'OTLP ingest: logs, metrics, traces' UNION ALL SELECT 'signoz-clickhouse', 'signoz-production', 'Telemetry storage in ClickHouse' UNION ALL SELECT 'signoz-zookeeper', 'signoz-production', 'ClickHouse coordination' UNION ALL SELECT 'signoz-clickhouse-operator', 'signoz-production', 'Manage ClickHouseInstallation' UNION ALL SELECT 'signoz-k8s-infra-otel-agent', 'signoz-production-agents', 'DaemonSet: pod logs, host/kubelet metrics' UNION ALL SELECT 'signoz-k8s-infra-otel-deployment', 'signoz-production-agents', 'Deployment: cluster metrics and Kubernetes events'"
+          }
+        ],
+        "promql": [{"name": "A", "disabled": false, "legend": "", "query": ""}],
+        "builder": {"queryData": [], "queryFormulas": []}
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "yAxisUnit": "none",
+      "columnUnits": {},
+      "thresholds": []
+    },
+    {
+      "id": "telemetry-volume",
+      "title": "Telemetry Volume - Last 24h",
+      "description": "Chung minh SigNoz da ingest du lieu vao ClickHouse: logs, metric samples, metric series va traces.",
+      "panelTypes": "table",
+      "query": {
+        "id": "telemetry-volume-query",
+        "queryType": "clickhouse_sql",
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "disabled": false,
+            "legend": "",
+            "query": "SELECT 'logs' AS signal, count() AS rows FROM signoz_logs.logs_v2 WHERE timestamp >= toUnixTimestamp64Nano(now64(9) - INTERVAL 24 HOUR) UNION ALL SELECT 'metric_samples', count() FROM signoz_metrics.samples_v4 WHERE unix_milli >= (toUnixTimestamp(now() - INTERVAL 24 HOUR) * 1000) UNION ALL SELECT 'metric_series', count() FROM signoz_metrics.time_series_v4 UNION ALL SELECT 'traces', count() FROM signoz_traces.signoz_index_v3 WHERE timestamp >= now64(9) - INTERVAL 24 HOUR"
+          }
+        ],
+        "promql": [{"name": "A", "disabled": false, "legend": "", "query": ""}],
+        "builder": {"queryData": [], "queryFormulas": []}
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "yAxisUnit": "none",
+      "columnUnits": {},
+      "thresholds": []
+    },
+    {
+      "id": "logs-by-component",
+      "title": "Logs By SigNoz Component - Last 30m",
+      "description": "Cho thay k8s-infra dang thu logs/events va gan resource attributes nhu signoz.component, namespace, object.",
+      "panelTypes": "table",
+      "query": {
+        "id": "logs-by-component-query",
+        "queryType": "clickhouse_sql",
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "disabled": false,
+            "legend": "",
+            "query": "SELECT if(resources_string['signoz.component'] = '', 'unknown', resources_string['signoz.component']) AS component, count() AS log_rows FROM signoz_logs.logs_v2 WHERE timestamp >= toUnixTimestamp64Nano(now64(9) - INTERVAL 30 MINUTE) GROUP BY component ORDER BY log_rows DESC LIMIT 20"
+          }
+        ],
+        "promql": [{"name": "A", "disabled": false, "legend": "", "query": ""}],
+        "builder": {"queryData": [], "queryFormulas": []}
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "yAxisUnit": "none",
+      "columnUnits": {},
+      "thresholds": []
+    },
+    {
+      "id": "recent-k8s-events",
+      "title": "Recent Kubernetes Events",
+      "description": "Kubernetes events duoc collector ghi vao logs_v2. Panel nay dung de demo su kien pod/container tren cluster.",
+      "panelTypes": "table",
+      "query": {
+        "id": "recent-k8s-events-query",
+        "queryType": "clickhouse_sql",
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "disabled": false,
+            "legend": "",
+            "query": "SELECT fromUnixTimestamp64Nano(timestamp) AS ts, attributes_string['k8s.namespace.name'] AS namespace, resources_string['k8s.object.kind'] AS kind, resources_string['k8s.object.name'] AS object, attributes_string['k8s.event.reason'] AS reason, severity_text, body FROM signoz_logs.logs_v2 WHERE scope_name LIKE '%k8seventsreceiver%' ORDER BY timestamp DESC LIMIT 25"
+          }
+        ],
+        "promql": [{"name": "A", "disabled": false, "legend": "", "query": ""}],
+        "builder": {"queryData": [], "queryFormulas": []}
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "yAxisUnit": "none",
+      "columnUnits": {},
+      "thresholds": []
+    },
+    {
+      "id": "metric-samples-by-minute",
+      "title": "Metric Samples By Minute",
+      "description": "Throughput metric samples vao ClickHouse. Neu duong nay co du lieu, k8s-infra metrics dang chay.",
+      "panelTypes": "graph",
+      "query": {
+        "id": "metric-samples-by-minute-query",
+        "queryType": "clickhouse_sql",
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "disabled": false,
+            "legend": "metric samples",
+            "query": "SELECT toStartOfMinute(toDateTime(unix_milli / 1000)) AS ts, count() AS samples FROM signoz_metrics.samples_v4 WHERE unix_milli >= (toUnixTimestamp(now() - INTERVAL 30 MINUTE) * 1000) GROUP BY ts ORDER BY ts"
+          }
+        ],
+        "promql": [{"name": "A", "disabled": false, "legend": "", "query": ""}],
+        "builder": {"queryData": [], "queryFormulas": []}
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "yAxisUnit": "none",
+      "columnUnits": {},
+      "thresholds": []
+    },
+    {
+      "id": "logs-by-minute",
+      "title": "Logs By Minute",
+      "description": "Throughput logs/events vao ClickHouse.",
+      "panelTypes": "graph",
+      "query": {
+        "id": "logs-by-minute-query",
+        "queryType": "clickhouse_sql",
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "disabled": false,
+            "legend": "logs",
+            "query": "SELECT toStartOfMinute(toDateTime(timestamp / 1000000000)) AS ts, count() AS logs FROM signoz_logs.logs_v2 WHERE timestamp >= toUnixTimestamp64Nano(now64(9) - INTERVAL 30 MINUTE) GROUP BY ts ORDER BY ts"
+          }
+        ],
+        "promql": [{"name": "A", "disabled": false, "legend": "", "query": ""}],
+        "builder": {"queryData": [], "queryFormulas": []}
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "yAxisUnit": "none",
+      "columnUnits": {},
+      "thresholds": []
+    },
+    {
+      "id": "smoke-traces",
+      "title": "Smoke Test Traces",
+      "description": "Trace smoke-test chung minh duong OTLP traces hoat dong: app -> collector -> ClickHouse -> SigNoz UI.",
+      "panelTypes": "table",
+      "query": {
+        "id": "smoke-traces-query",
+        "queryType": "clickhouse_sql",
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "disabled": false,
+            "legend": "",
+            "query": "SELECT timestamp, serviceName, name, round(duration_nano / 1000000, 2) AS duration_ms, status_code_string, trace_id FROM signoz_traces.signoz_index_v3 WHERE serviceName = 'signoz-production-smoke' ORDER BY timestamp DESC LIMIT 20"
+          }
+        ],
+        "promql": [{"name": "A", "disabled": false, "legend": "", "query": ""}],
+        "builder": {"queryData": [], "queryFormulas": []}
+      },
+      "timePreferance": "GLOBAL_TIME",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "yAxisUnit": "none",
+      "columnUnits": {"duration_ms": "ms"},
+      "thresholds": []
+    }
+  ],
+  "uuid": "signoz-production-stack-overview"
+}

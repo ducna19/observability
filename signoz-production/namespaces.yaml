@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: signoz-production
+  labels:
+    app.kubernetes.io/part-of: signoz-production
+    observability.stack: signoz
+    environment: production-lab
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: signoz-production-agents
+  labels:
+    app.kubernetes.io/part-of: signoz-production
+    observability.stack: signoz
+    environment: production-lab

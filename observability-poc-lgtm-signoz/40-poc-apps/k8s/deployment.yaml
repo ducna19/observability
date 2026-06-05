@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-api
+  namespace: poc-apps
+  labels:
+    app.kubernetes.io/name: sample-api
+    app.kubernetes.io/part-of: observability-poc
+    app.kubernetes.io/component: api
+    env: poc
+    system: observability-poc
+    service: sample-api
+    team: devops
+    owner: devops-platform
+    criticality: tier-3
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sample-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sample-api
+        app.kubernetes.io/part-of: observability-poc
+        app.kubernetes.io/component: api
+        env: poc
+        system: observability-poc
+        service: sample-api
+        team: devops
+        owner: devops-platform
+        criticality: tier-3
+    spec:
+      containers:
+        - name: sample-api
+          image: observability-sample-api:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+
+            - name: OTEL_SERVICE_NAME
+              value: sample-api
+
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: >-
+                service.namespace=observability-poc,
+                service.version=0.1.0,
+                deployment.environment=poc,
+                deployment.environment.name=poc,
+                k8s.cluster.name=k8s-poc-01,
+                k8s.namespace.name=poc-apps,
+                team.name=devops,
+                owner=devops-platform,
+                criticality=tier-3
+
+            # Mặc định gửi về OTel Router.
+            # Nếu chưa cài router, đổi sang:
+            # http://alloy-otlp.obs-lgtm.svc.cluster.local:4318
+            # hoặc:
+            # http://signoz-otel-collector.obs-signoz.svc.cluster.local:4318
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-poc-router-opentelemetry-collector.obs-router.svc.cluster.local:4318
+
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: http/protobuf
+
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+
+            - name: OTEL_LOGS_EXPORTER
+              value: otlp
+
+            - name: DEPLOYMENT_ENV
+              value: poc
+
+            - name: TEAM
+              value: devops
+
+            - name: OWNER
+              value: devops-platform
+
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-api
+  namespace: poc-apps
+  labels:
+    app.kubernetes.io/name: sample-api
+    env: poc
+    system: observability-poc
+    service: sample-api
+    team: devops
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: sample-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

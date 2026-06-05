@@ -1,0 +1,60 @@
+# SigNoz POC values.
+# Một số key có thể thay đổi theo chart version.
+# Kiểm tra bằng: helm show values signoz/signoz > /tmp/signoz-values.yaml
+
+global:
+  # Để rỗng nếu muốn dùng default storageClass của cluster.
+  storageClass: ""
+
+clickhouse:
+  persistence:
+    enabled: true
+    size: 150Gi
+
+  resources:
+    requests:
+      cpu: "1"
+      memory: 4Gi
+    limits:
+      cpu: "2"
+      memory: 8Gi
+
+zookeeper:
+  persistence:
+    enabled: true
+    size: 10Gi
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+frontend:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+queryService:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+otelCollector:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi

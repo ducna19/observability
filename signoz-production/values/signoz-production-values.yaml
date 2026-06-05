@@ -1,0 +1,89 @@
+# SigNoz production-like values for a single-node learning lab.
+# The architecture is production-oriented, but resource requests are reduced so
+# it can run next to the LGTM stack on Kind.
+
+global:
+  storageClass: standard
+  clusterName: learning-lab
+  cloud: other
+
+clusterName: learning-lab
+
+clickhouse:
+  enabled: true
+  installCustomStorageClass: false
+
+  zookeeper:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+
+  layout:
+    shardsCount: 1
+    replicasCount: 1
+
+  persistence:
+    enabled: true
+    storageClass: standard
+    size: 30Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+signoz:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    storageClass: standard
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+otelCollector:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+telemetryStoreMigrator:
+  enableReplication: false
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+signoz-otel-gateway:
+  enabled: false
+
+schemaMigrator:
+  enabled: false
+
+alertmanager:
+  enabled: true

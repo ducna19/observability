@@ -1,0 +1,113 @@
+controller:
+  type: daemonset
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+alloy:
+  clustering:
+    enabled: true
+
+  mounts:
+    varlog: true
+    dockercontainers: true
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+  configMap:
+    create: true
+    content: |
+      logging {
+        level  = "info"
+        format = "logfmt"
+      }
+
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      discovery.relabel "pod_logs" {
+        targets = discovery.kubernetes.pods.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "app"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_service"]
+          target_label  = "service"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_team"]
+          target_label  = "team"
+        }
+
+        rule {
+          target_label = "cluster"
+          replacement  = "learning-lab"
+        }
+
+        rule {
+          target_label = "env"
+          replacement  = "production"
+        }
+      }
+
+      loki.source.kubernetes "pod_logs" {
+        targets    = discovery.relabel.pod_logs.output
+        forward_to = [loki.process.pod_logs.receiver]
+      }
+
+      loki.process "pod_logs" {
+        stage.cri {}
+
+        stage.labels {
+          values = {
+            namespace = "",
+            pod       = "",
+            container = "",
+            app       = "",
+            service   = "",
+            team      = "",
+            cluster   = "",
+            env       = "",
+          }
+        }
+
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push"
+          headers = {
+            "X-Scope-OrgID" = "production",
+          }
+        }
+      }
